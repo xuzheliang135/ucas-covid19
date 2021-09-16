@@ -170,9 +170,8 @@ def submit(s: requests.Session, old: dict):
         print("打卡成功")
     else:
         print("打卡失败，错误信息: ", r.json().get("m"))
-
-    message(api_key, sender_email, sender_email_passwd, receiver_email,
-            tg_bot_token, tg_chat_id, result.get('m'), new_daily)
+        message(api_key, sender_email, sender_email_passwd, receiver_email,
+                tg_bot_token, tg_chat_id, result.get('m'), new_daily)
 
 
 def check_submit_data(data: dict):
