@@ -16,7 +16,6 @@ from datetime import datetime
 from email.utils import formataddr
 from email.mime.text import MIMEText
 
-
 # 开启debug将会输出打卡填报的数据，关闭debug只会输出打卡成功或者失败，如果使用github actions，请务必设置该选项为False
 debug = False
 
@@ -90,8 +89,8 @@ def login(s: requests.Session, username, password, cookie_file: Path):
 
 
 def get_daily(s: requests.Session):
-    daily = s.get("https://app.ucas.ac.cn/ncov/api/default/daily?xgh=0&app_id=ucas")
-    # info = s.get("https://app.ucas.ac.cn/ncov/api/default/index?xgh=0&app_id=ucas")
+    daily = s.get("https://app.ucas.ac.cn/ucasncov/api/default/daily?xgh=0&app_id=ucas")
+
     if '操作成功' not in daily.text:
         # 会话无效，跳转到了登录页面
         print("会话无效")
@@ -103,62 +102,16 @@ def get_daily(s: requests.Session):
 
 def submit(s: requests.Session, old: dict):
     new_daily = {
-        'realname': old['realname'],
-        'number': old['number'],
-        'szgj_api_info': old['szgj_api_info'],
-        # 'szgj': old['szgj'],# 2021.8.1 del
-        # 'old_sfzx': old['sfzx'],# 2021.8.1 del
-        'sfzx': old['sfzx'],
-        'szdd': old['szdd'],
-        'ismoved': 0,  # 如果前一天位置变化这个值会为1，第二天仍然获取到昨天的1，而事实上位置是没变化的，所以置0
-        # 'ismoved': old['ismoved'],
-        'tw': old['tw'],
-        # 'bztcyy': old['bztcyy'], # 2021.8.1 del
-        # 'sftjwh': old['sfsfbh'],  # 2020.9.16 del
-        # 'sftjhb': old['sftjhb'],  # 2020.9.16 del
-        'sfcxtz': old['sfcxtz'],
-        # 'sfyyjc': old['sfyyjc'],# 2021.8.1 del
-        # 'jcjgqr': old['jcjgqr'],# 2021.8.1 del
-        # 'sfjcwhry': old['sfjcwhry'],  # 2020.9.16 del
-        # 'sfjchbry': old['sfjchbry'],  # 2020.9.16 del
-        'sfjcbh': old['sfjcbh'],  # 是否接触病患
-        # 'jcbhlx': old['jcbhlx'], # 2021.1.29 del 接触病患类型
-        'sfcyglq': old['sfcyglq'],  # 是否处于隔离期
-        # 'gllx': old['gllx'],   # 2021.1.29 del 隔离类型
-        'sfcxzysx': old['sfcxzysx'],
-        # 'old_szdd': old['szdd'],# 2021.8.1 del
-        'geo_api_info': old['old_city'],  # 保持昨天的结果
-        'old_city': old['old_city'],
-        'geo_api_infot': old['geo_api_infot'],
         'date': datetime.now(tz=pytz.timezone("Asia/Shanghai")).strftime("%Y-%m-%d"),
-        # 'fjsj': old['fjsj'],  # 返京时间# 2021.8.1 del
-        # 'ljrq': old['ljrq'],  # 离京日期 add@2021.1.24# 2021.8.1 del
-        # 'qwhd': old['qwhd'],  # 去往何地 add@2021.1.24# 2021.8.1 del
-        # 'chdfj': old['chdfj'],  # 从何地返京 add@2021.1.24# 2021.8.1 del
-        # 'jcbhrq': old['jcbhrq'], # del 2021.1.29 接触病患日期
-        # 'glksrq': old['glksrq'], # del 2021.1.29 隔离开始日期
-        # 'fxyy': old['fxyy'],# 2021.8.1 del
-        # 'jcjg': old['jcjg'],# 2021.8.1 del
-        # 'jcjgt': old['jcjgt'],# 2021.8.1 del
-        # 'qksm': old['qksm'],# 2021.8.1 del
-        # 'remark': old['remark'],
-        'jcjgqk': old['jcjgqk'],
-        # 'jcwhryfs': old['jcwhryfs'],# 2021.8.1 del
-        # 'jchbryfs': old['jchbryfs'],# 2021.8.1 del
-        'gtshcyjkzt': old['gtshcyjkzt'],  # add @2020.9.16
-        'jrsfdgzgfxdq': old['jrsfdgzgfxdq'],  # add @2020.9.16
-        'jrsflj': old['jrsflj'],  # add @2020.9.16
         'app_id': 'ucas'
     }
-
-    check_data_msg = check_submit_data(new_daily)  # 检查上报结果
-    if check_data_msg is not None:
-        message(api_key, sender_email, sender_email_passwd, receiver_email, tg_bot_token,
-                tg_chat_id, "每日健康打卡-{}".format(check_data_msg), "{}".format(new_daily))
-        print("提交数据存在问题，请手动打卡，问题原因： {}".format(check_data_msg))
-        return
-
-    r = s.post("https://app.ucas.ac.cn/ncov/api/default/save", data=new_daily)
+    copy_list = ['dyzjzsj', 'dezymjzqk', 'dezwjzyy', 'dezjzsj', 'dszymjzqk', 'dszwjzyy', 'dszjzsj', 'gtshryjkzk',
+                 'extinfo', 'realname', 'number', 'sfzx', 'dqszdd', 'jzdz', 'tw', 'geo_api_info', 'geo_api_infot',
+                 'zrzsdd', 'sfzx', 'dqszdd', 'dqsfzzgfxdq', 'zgfxljs', 'sffrzz', 'dqqk1', 'dqqk1qt', 'dqqk2', 'dqqk2qt',
+                 'sfjshsjc', 'dyzymjzqk', 'dyzwjzyy']
+    for i in copy_list:
+        new_daily[i] = old[i]
+    r = s.post("https://app.ucas.ac.cn/ucasncov/api/default/save", data=new_daily)
     if debug:
         from urllib.parse import parse_qs, unquote
         print("昨日信息:", json.dumps(old, ensure_ascii=False, indent=2))
@@ -172,25 +125,6 @@ def submit(s: requests.Session, old: dict):
         print("打卡失败，错误信息: ", r.json().get("m"))
         message(api_key, sender_email, sender_email_passwd, receiver_email,
                 tg_bot_token, tg_chat_id, result.get('m'), new_daily)
-
-
-def check_submit_data(data: dict):
-    """
-    检查提交数据是否正常
-    """
-    msg = []
-    # 所在地点
-    if data['szdd'] != "国内":
-        msg.append("所在地点不是国内，请手动填报")
-
-    # 体温
-    if int(data['tw']) > 4:
-        msg.append("体温大于 37.3 度 ，请手动填报")
-
-    if data['jrsflj'] == '是':
-        msg.append("近日有离京经历，请手动填报")
-
-    return ";".join(msg) if msg else None
 
 
 def message(key, sender, mail_passwd, receiver, bot_token, chat_id, subject, msg):
@@ -246,7 +180,7 @@ def send_telegram_message(bot_token, chat_id, msg):
     此处使用时再导入以保证向后兼容 python 3.5；
     如果要使用 tg 消息通知，请使用 python 3.6或更高的版本
     """
-    import telegram 
+    import telegram
     bot = telegram.Bot(token=bot_token)
     bot.send_message(chat_id=chat_id, text=msg)
 
@@ -262,9 +196,6 @@ def report(username, password):
     s.headers.update(header)
 
     print(datetime.now(tz=pytz.timezone("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M:%S %Z"))
-    for i in range(randint(10, 600), 0, -1):
-        print("\r等待{}秒后填报".format(i), end='')
-        sleep(1)
 
     cookie_file_name = Path("{}.json".format(hashlib.sha512(username.encode()).hexdigest()[:8]))
     login(s, username, password, cookie_file_name)
